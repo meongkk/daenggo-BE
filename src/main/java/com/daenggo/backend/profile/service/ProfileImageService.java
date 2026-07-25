@@ -201,8 +201,8 @@ public class ProfileImageService {
     }
 
     private enum ProfileImageType {
-        USER("users", "/api/users/images/"),
-        PET("pets", "/api/pets/images/");
+        USER("users", "/uploads/users/"),
+        PET("pets", "/uploads/pets/");
 
         private final String directoryName;
         private final String apiPath;
