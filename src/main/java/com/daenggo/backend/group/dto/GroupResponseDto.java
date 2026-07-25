@@ -3,6 +3,7 @@ package com.daenggo.backend.group.dto;
 import com.daenggo.backend.group.entity.Group;
 import com.daenggo.backend.group.entity.GroupMember;
 import com.daenggo.backend.group.entity.GroupMemberRole;
+import com.daenggo.backend.pet.entity.Pet;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -88,6 +89,29 @@ public final class GroupResponseDto {
                     member.getUser().getImage(),
                     member.getRole(),
                     member.getJoinedAt()
+            );
+        }
+    }
+
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class GroupPet {
+
+        private final Long petId;
+        private final String name;
+        private final String profileImageUrl;
+        private final boolean primary;
+        private final Long ownerUserId;
+        private final String ownerNickname;
+
+        public static GroupPet from(final Pet pet) {
+            return new GroupPet(
+                    pet.getId(),
+                    pet.getName(),
+                    pet.getImage(),
+                    pet.isPrimary(),
+                    pet.getUser().getId(),
+                    pet.getUser().getNickname()
             );
         }
     }

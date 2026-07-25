@@ -1,6 +1,7 @@
 package com.daenggo.backend.pet.repository;
 
 import com.daenggo.backend.pet.entity.Pet;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -9,6 +10,9 @@ import java.util.Optional;
 public interface PetRepository extends JpaRepository<Pet, Long> {
 
     List<Pet> findAllByUserIdAndDeletedAtIsNull(Long userId);
+
+    @EntityGraph(attributePaths = "user")
+    List<Pet> findAllByUserIdInAndDeletedAtIsNullOrderByNameAsc(List<Long> userIds);
 
     Optional<Pet> findByIdAndUserIdAndDeletedAtIsNull(Long petId, Long userId);
 

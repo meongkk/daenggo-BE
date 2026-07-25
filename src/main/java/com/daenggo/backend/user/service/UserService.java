@@ -59,7 +59,7 @@ public class UserService {
         }
 
         return userRepository
-                .findTop20ByNicknameContainingIgnoreCaseAndDeletedAtIsNullOrderByNicknameAsc(
+                .findTop10ByNicknameContainingIgnoreCaseAndDeletedAtIsNullOrderByNicknameAsc(
                         nickname.strip()
                 )
                 .stream()
