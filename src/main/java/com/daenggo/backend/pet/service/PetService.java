@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -25,6 +26,11 @@ import java.util.List;
 public class PetService {
 
     private static final String DIRECT_INPUT_BREED_NAME = "직접 입력";
+    private static final BigDecimal MEDIUM_DOG_MIN_WEIGHT = new BigDecimal("10");
+    private static final BigDecimal LARGE_DOG_MIN_WEIGHT = new BigDecimal("25");
+    private static final String SMALL_SIZE = "SMALL";
+    private static final String MEDIUM_SIZE = "MEDIUM";
+    private static final String LARGE_SIZE = "LARGE";
 
     private final PetRepository petRepository;
     private final BreedRepository breedRepository;
@@ -86,7 +92,7 @@ public class PetService {
                 .primary(primary)
                 .name(request.getName().trim())
                 .weight(request.getWeight())
-                .size(request.getSize().trim())
+                .size(calculateSize(request.getWeight()))
                 .image(normalizeNullable(request.getProfileImageUrl()))
                 .registrationNumber(normalizeNullable(request.getRegistrationNumber()))
                 .vaccine(normalizeNullable(request.getVaccine()))
@@ -114,11 +120,12 @@ public class PetService {
         final User user = findActiveUser(email);
         final Pet pet = findOwnedPet(petId, user.getId());
         final ResolvedBreed resolvedBreed = resolveBreed(request);
+        final BigDecimal weight = request.getWeight();
 
         pet.updateBasicInfo(
                 normalizeNullable(request.getName()),
-                request.getWeight(),
-                normalizeNullable(request.getSize())
+                weight,
+                weight == null ? null : calculateSize(weight)
         );
 
         if (resolvedBreed != null) {
@@ -285,6 +292,22 @@ public class PetService {
                 .name(DIRECT_INPUT_BREED_NAME)
                 .dangerous(false)
                 .build());
+    }
+
+    /**
+     * 몸무게를 기준으로 반려견 크기를 계산
+     *
+     * @param weight 반려견 몸무게(kg)
+     * @return 10kg 미만 SMALL, 25kg 미만 MEDIUM, 25kg 이상 LARGE
+     */
+    private String calculateSize(final BigDecimal weight) {
+        if (weight.compareTo(MEDIUM_DOG_MIN_WEIGHT) < 0) {
+            return SMALL_SIZE;
+        }
+        if (weight.compareTo(LARGE_DOG_MIN_WEIGHT) < 0) {
+            return MEDIUM_SIZE;
+        }
+        return LARGE_SIZE;
     }
 
     /**
