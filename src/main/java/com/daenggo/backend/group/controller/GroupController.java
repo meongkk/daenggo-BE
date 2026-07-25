@@ -51,6 +51,30 @@ public class GroupController {
     }
 
     /**
+     * 그룹장이 선택한 회원을 그룹원으로 즉시 추가
+     *
+     * @param authentication 로그인 회원 인증 정보
+     * @param groupId 그룹원을 추가할 그룹 ID
+     * @param request 추가할 회원 요청
+     * @return 추가된 그룹원 정보
+     */
+    @PostMapping("/{groupId}/members")
+    public ResponseEntity<GroupResponseDto.Member> addMember(
+            final Authentication authentication,
+            @PathVariable final Long groupId,
+            @Valid @RequestBody final GroupRequestDto.AddMember request
+    ) {
+        final GroupResponseDto.Member response = groupService.addMember(
+                authentication.getName(),
+                groupId,
+                request
+        );
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    /**
      * 로그인 회원이 참여 중인 그룹 목록 조회
      *
      * @param authentication 로그인 회원 인증 정보
@@ -192,6 +216,25 @@ public class GroupController {
             @PathVariable final Long groupId
     ) {
         final List<GroupResponseDto.Member> response = groupService.getGroupMembers(
+                authentication.getName(),
+                groupId
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 활동 중인 그룹원들이 직접 소유한 반려동물 목록 조회
+     *
+     * @param authentication 로그인 회원 인증 정보
+     * @param groupId 조회할 그룹 ID
+     * @return 그룹원의 반려동물 목록
+     */
+    @GetMapping("/{groupId}/pets")
+    public ResponseEntity<List<GroupResponseDto.GroupPet>> getGroupPets(
+            final Authentication authentication,
+            @PathVariable final Long groupId
+    ) {
+        final List<GroupResponseDto.GroupPet> response = groupService.getGroupPets(
                 authentication.getName(),
                 groupId
         );

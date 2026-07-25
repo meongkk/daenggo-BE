@@ -80,4 +80,10 @@ public class GroupMember {
         this.status = GroupMemberStatus.KICK;
         this.leftAt = leftAt;
     }
+
+    public void reactivate() {
+        this.role = GroupMemberRole.MEMBER;
+        this.status = GroupMemberStatus.ACTIVE;
+        this.leftAt = null;
+    }
 }

@@ -8,6 +8,7 @@ import com.daenggo.backend.group.entity.GroupMemberRole;
 import com.daenggo.backend.group.entity.GroupMemberStatus;
 import com.daenggo.backend.group.repository.GroupMemberRepository;
 import com.daenggo.backend.group.repository.GroupRepository;
+import com.daenggo.backend.pet.repository.PetRepository;
 import com.daenggo.backend.user.entity.User;
 import com.daenggo.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 그룹 관리 비즈니스 로직
@@ -29,6 +31,7 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final PetRepository petRepository;
     private final UserRepository userRepository;
 
     /**
@@ -63,6 +66,85 @@ public class GroupService {
                 1L,
                 GroupMemberRole.OWNER
         );
+    }
+
+    /**
+     * 그룹장이 선택한 회원을 그룹원으로 즉시 추가
+     *
+     * @param email 로그인 회원 이메일
+     * @param groupId 그룹원을 추가할 그룹 ID
+     * @param request 추가할 회원 요청
+     * @return 추가된 그룹원 정보
+     */
+    @Transactional
+    public GroupResponseDto.Member addMember(
+            final String email,
+            final Long groupId,
+            final GroupRequestDto.AddMember request
+    ) {
+        final User requester = findActiveUser(email);
+        final GroupMember owner = groupMemberRepository
+                .findByGroupIdAndUserIdAndStatus(
+                        groupId,
+                        requester.getId(),
+                        GroupMemberStatus.ACTIVE
+                )
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "해당 그룹에 참여하고 있지 않습니다."
+                ));
+
+        if (owner.getRole() != GroupMemberRole.OWNER) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "그룹장만 그룹원을 추가할 수 있습니다."
+            );
+        }
+
+        final User targetUser = userRepository
+                .findByIdAndDeletedAtIsNull(request.getUserId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "추가할 회원을 찾을 수 없습니다."
+                ));
+
+        if (requester.getId().equals(targetUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "본인을 그룹원으로 추가할 수 없습니다."
+            );
+        }
+
+        final Optional<GroupMember> existingMember =
+                groupMemberRepository.findByGroupIdAndUserId(
+                        groupId,
+                        targetUser.getId()
+                );
+
+        if (existingMember.isPresent()) {
+            final GroupMember member = existingMember.get();
+
+            if (member.getStatus() == GroupMemberStatus.ACTIVE) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "이미 참여 중인 그룹원입니다."
+                );
+            }
+
+            member.reactivate();
+            return GroupResponseDto.Member.from(member);
+        }
+
+        final GroupMember member = groupMemberRepository.save(
+                GroupMember.builder()
+                        .group(owner.getGroup())
+                        .user(targetUser)
+                        .role(GroupMemberRole.MEMBER)
+                        .status(GroupMemberStatus.ACTIVE)
+                        .build()
+        );
+
+        return GroupResponseDto.Member.from(member);
     }
 
     /**
@@ -408,6 +490,53 @@ public class GroupService {
                 )
                 .stream()
                 .map(GroupResponseDto.Member::from)
+                .toList();
+    }
+
+    /**
+     * 활동 중인 그룹원들이 직접 소유한 반려동물 목록 조회
+     *
+     * @param email 로그인 회원 이메일
+     * @param groupId 조회할 그룹 ID
+     * @return 그룹원의 반려동물 목록
+     */
+    public List<GroupResponseDto.GroupPet> getGroupPets(
+            final String email,
+            final Long groupId
+    ) {
+        final User user = findActiveUser(email);
+
+        if (!groupRepository.existsById(groupId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "그룹을 찾을 수 없습니다."
+            );
+        }
+
+        if (!groupMemberRepository.existsByGroupIdAndUserIdAndStatus(
+                groupId,
+                user.getId(),
+                GroupMemberStatus.ACTIVE
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "해당 그룹에 참여 중인 회원만 반려동물을 조회할 수 있습니다."
+            );
+        }
+
+        final List<Long> activeMemberUserIds = groupMemberRepository
+                .findAllByGroupIdAndStatusOrderByJoinedAtAsc(
+                        groupId,
+                        GroupMemberStatus.ACTIVE
+                )
+                .stream()
+                .map(member -> member.getUser().getId())
+                .toList();
+
+        return petRepository
+                .findAllByUserIdInAndDeletedAtIsNullOrderByNameAsc(activeMemberUserIds)
+                .stream()
+                .map(GroupResponseDto.GroupPet::from)
                 .toList();
     }
 

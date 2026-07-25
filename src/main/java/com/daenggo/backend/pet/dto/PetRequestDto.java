@@ -34,10 +34,6 @@ public final class PetRequestDto {
         @Digits(integer = 3, fraction = 2)
         private BigDecimal weight;
 
-        @NotBlank
-        @Size(max = 20)
-        private String size;
-
         @Size(max = 500)
         private String profileImageUrl;
 
@@ -71,10 +67,6 @@ public final class PetRequestDto {
         @DecimalMin("0.01")
         @Digits(integer = 3, fraction = 2)
         private BigDecimal weight;
-
-        @Size(max = 20)
-        @Pattern(regexp = ".*\\S.*", message = "크기는 공백일 수 없습니다.")
-        private String size;
 
         @Size(max = 500)
         private String profileImageUrl;
