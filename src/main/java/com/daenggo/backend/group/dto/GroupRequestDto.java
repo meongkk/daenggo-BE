@@ -40,4 +40,12 @@ public final class GroupRequestDto {
         @NotNull
         private Long memberId;
     }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class AddMember {
+
+        @NotNull
+        private Long userId;
+    }
 }
