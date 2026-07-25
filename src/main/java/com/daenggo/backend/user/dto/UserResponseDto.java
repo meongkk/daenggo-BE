@@ -30,4 +30,21 @@ public final class UserResponseDto {
             );
         }
     }
+
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Search {
+
+        private final Long userId;
+        private final String nickname;
+        private final String profileImageUrl;
+
+        public static Search from(final User user) {
+            return new Search(
+                    user.getId(),
+                    user.getNickname(),
+                    user.getImage()
+            );
+        }
+    }
 }

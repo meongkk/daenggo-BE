@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 /**
  * 회원 정보 관리 비즈니스 로직
  */
@@ -34,6 +36,36 @@ public class UserService {
     public UserResponseDto.Me getMyInfo(final String email) {
         final User user = findActiveUser(email);
         return UserResponseDto.Me.from(user);
+    }
+
+    /**
+     * 로그인 회원을 제외하고 닉네임으로 활동 중인 회원 검색
+     *
+     * @param email 로그인 회원 이메일
+     * @param nickname 검색할 닉네임
+     * @return 닉네임 검색 결과
+     */
+    public List<UserResponseDto.Search> searchUsersByNickname(
+            final String email,
+            final String nickname
+    ) {
+        final User currentUser = findActiveUser(email);
+
+        if (nickname == null || nickname.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "검색할 닉네임을 입력해 주세요."
+            );
+        }
+
+        return userRepository
+                .findTop20ByNicknameContainingIgnoreCaseAndDeletedAtIsNullOrderByNicknameAsc(
+                        nickname.strip()
+                )
+                .stream()
+                .filter(user -> !user.getId().equals(currentUser.getId()))
+                .map(UserResponseDto.Search::from)
+                .toList();
     }
 
     /**
