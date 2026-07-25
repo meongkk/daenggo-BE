@@ -92,6 +92,10 @@ public class WalkResponse {
         private Long walkRecordId;
 
         private LocalDate walkDate;
+        
+        private String title;
+
+        private String memo;
 
     }
 
