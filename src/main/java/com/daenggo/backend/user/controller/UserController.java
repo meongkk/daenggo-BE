@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 회원 정보 관리 REST 컨트롤러
@@ -35,6 +38,25 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto.Me> getMyInfo(final Authentication authentication) {
         final UserResponseDto.Me response = userService.getMyInfo(authentication.getName());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 닉네임으로 활동 중인 회원 검색
+     *
+     * @param authentication 로그인 회원 인증 정보
+     * @param nickname 검색할 닉네임
+     * @return 회원 검색 결과
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<UserResponseDto.Search>> searchUsers(
+            final Authentication authentication,
+            @RequestParam final String nickname
+    ) {
+        final List<UserResponseDto.Search> response = userService.searchUsersByNickname(
+                authentication.getName(),
+                nickname
+        );
         return ResponseEntity.ok(response);
     }
 
