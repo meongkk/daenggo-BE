@@ -284,6 +284,8 @@ public class WalkService {
 	    		.map(i -> WalkCalendarItem.builder()
 	    				.walkRecordId(i.getWalkRecordId())
 	    				.walkDate(i.getStartedAt().toLocalDate())
+	    				.title(i.getTitle())
+	    				.memo(i.getMemo())
 	    				.build())
 	    		.toList();
 	    
