@@ -63,4 +63,16 @@ public final class AuthRequestDto {
         @NotBlank
         private String refreshToken;
     }
+
+    /**
+     * 최초 소셜 로그인 후 닉네임을 정해 가입을 완료하는 요청
+     */
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class OAuthSignup {
+
+        @NotBlank
+        @Size(max = 50)
+        private String nickname;
+    }
 }
