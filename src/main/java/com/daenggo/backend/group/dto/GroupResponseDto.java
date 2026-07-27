@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class GroupResponseDto {
+public final class  GroupResponseDto {
 
     @Getter
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
