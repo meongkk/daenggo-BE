@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.daenggo.backend.user.entity.User;
@@ -22,5 +23,10 @@ public interface WalkRecordRepository extends JpaRepository<WalkRecord, Long> {
             User user,
             LocalDateTime start,
             LocalDateTime end
+    );
+
+    @EntityGraph(attributePaths = "user")
+    List<WalkRecord> findAllByUserIdInAndEndedAtIsNotNullAndIsDeletedFalseOrderByStartedAtDesc(
+            List<Long> userIds
     );
 }

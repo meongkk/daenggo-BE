@@ -11,6 +11,10 @@ import com.daenggo.backend.group.repository.GroupRepository;
 import com.daenggo.backend.pet.repository.PetRepository;
 import com.daenggo.backend.user.entity.User;
 import com.daenggo.backend.user.repository.UserRepository;
+import com.daenggo.backend.walk.entity.WalkRecord;
+import com.daenggo.backend.walk.entity.WalkRecordPet;
+import com.daenggo.backend.walk.repository.WalkRecordPetRepository;
+import com.daenggo.backend.walk.repository.WalkRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,7 +23,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 그룹 관리 비즈니스 로직
@@ -33,6 +39,8 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final PetRepository petRepository;
     private final UserRepository userRepository;
+    private final WalkRecordRepository walkRecordRepository;
+    private final WalkRecordPetRepository walkRecordPetRepository;
 
     /**
      * 그룹 생성 및 생성 회원의 그룹장 등록
@@ -537,6 +545,78 @@ public class GroupService {
                 .findAllByUserIdInAndDeletedAtIsNullOrderByNameAsc(activeMemberUserIds)
                 .stream()
                 .map(GroupResponseDto.GroupPet::from)
+                .toList();
+    }
+
+    /**
+     * 활동 중인 그룹원들이 직접 기록한 완료 산책 목록 조회
+     *
+     * @param email 로그인 회원 이메일
+     * @param groupId 조회할 그룹 ID
+     * @return 그룹원의 완료 산책 목록
+     */
+    public List<GroupResponseDto.GroupWalk> getGroupWalks(
+            final String email,
+            final Long groupId
+    ) {
+        final User user = findActiveUser(email);
+
+        if (!groupRepository.existsById(groupId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "그룹을 찾을 수 없습니다."
+            );
+        }
+
+        if (!groupMemberRepository.existsByGroupIdAndUserIdAndStatus(
+                groupId,
+                user.getId(),
+                GroupMemberStatus.ACTIVE
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "해당 그룹에 참여 중인 회원만 산책 기록을 조회할 수 있습니다."
+            );
+        }
+
+        final List<Long> activeMemberUserIds = groupMemberRepository
+                .findAllByGroupIdAndStatusOrderByJoinedAtAsc(
+                        groupId,
+                        GroupMemberStatus.ACTIVE
+                )
+                .stream()
+                .map(member -> member.getUser().getId())
+                .toList();
+
+        final List<WalkRecord> walkRecords = walkRecordRepository
+                .findAllByUserIdInAndEndedAtIsNotNullAndIsDeletedFalseOrderByStartedAtDesc(
+                        activeMemberUserIds
+                );
+
+        if (walkRecords.isEmpty()) {
+            return List.of();
+        }
+
+        final Map<Long, List<WalkRecordPet>> petsByWalkRecordId =
+                walkRecordPetRepository
+                        .findAllByWalkRecordInAndPetDeletedAtIsNull(walkRecords)
+                        .stream()
+                        .filter(walkRecordPet ->
+                                walkRecordPet.getPet().getUser().getId().equals(
+                                        walkRecordPet.getWalkRecord().getUser().getId()
+                                ))
+                        .collect(Collectors.groupingBy(
+                                walkRecordPet ->
+                                        walkRecordPet.getWalkRecord().getWalkRecordId()
+                        ));
+
+        return walkRecords.stream()
+                .filter(walkRecord ->
+                        petsByWalkRecordId.containsKey(walkRecord.getWalkRecordId()))
+                .map(walkRecord -> GroupResponseDto.GroupWalk.from(
+                        walkRecord,
+                        petsByWalkRecordId.get(walkRecord.getWalkRecordId())
+                ))
                 .toList();
     }
 

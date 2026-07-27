@@ -52,7 +52,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     long countByGroupIdAndStatus(Long groupId, GroupMemberStatus status);
 
-    @Modifying(flushAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("delete from GroupMember member where member.group.id = ?1")
     void deleteAllByGroupId(Long groupId);
 }
