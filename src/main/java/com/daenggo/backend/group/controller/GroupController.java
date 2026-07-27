@@ -240,4 +240,23 @@ public class GroupController {
         );
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 활동 중인 그룹원들이 직접 기록한 완료 산책 목록 조회
+     *
+     * @param authentication 로그인 회원 인증 정보
+     * @param groupId 조회할 그룹 ID
+     * @return 그룹원의 완료 산책 목록
+     */
+    @GetMapping("/{groupId}/walks")
+    public ResponseEntity<List<GroupResponseDto.GroupWalk>> getGroupWalks(
+            final Authentication authentication,
+            @PathVariable final Long groupId
+    ) {
+        final List<GroupResponseDto.GroupWalk> response = groupService.getGroupWalks(
+                authentication.getName(),
+                groupId
+        );
+        return ResponseEntity.ok(response);
+    }
 }
