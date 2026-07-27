@@ -23,4 +23,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findTop10ByNicknameContainingIgnoreCaseAndDeletedAtIsNullOrderByNicknameAsc(
             String nickname
     );
+    
+    Optional<User> findByProviderAndProviderIdAndDeletedAtIsNull(
+        AuthProvider provider,
+        String providerId
+    );
 }
