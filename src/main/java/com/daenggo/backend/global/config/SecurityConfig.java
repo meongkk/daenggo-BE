@@ -1,5 +1,8 @@
 package com.daenggo.backend.global.config;
 
+import com.daenggo.backend.auth.oauth.KakaoOAuth2UserService;
+import com.daenggo.backend.auth.oauth.OAuth2LoginFailureHandler;
+import com.daenggo.backend.auth.oauth.OAuth2LoginSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +34,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             final HttpSecurity http,
             @Value("${ALLOW_UNAUTHENTICATED_DEVELOPMENT_API:false}")
-            final boolean allowUnauthenticatedDevelopmentApi
+            final boolean allowUnauthenticatedDevelopmentApi,
+            final KakaoOAuth2UserService kakaoOAuth2UserService,
+            final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
+            final OAuth2LoginFailureHandler oauth2LoginFailureHandler
     ) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -47,9 +53,15 @@ public class SecurityConfig {
                                     "/api/auth/signup",
                                     "/api/auth/login",
                                     "/api/auth/login/*",
+                                    "/api/auth/oauth/token",
+                                    "/api/auth/oauth/signup",
                                     "/api/auth/reissue",
                                     "/api/auth/password/reset",
                                     "/api/auth/password/reset-request"
+                            ).permitAll()
+                            .requestMatchers(HttpMethod.GET,
+                                    "/api/auth/oauth2/authorization/**",
+                                    "/api/auth/oauth2/code/**"
                             ).permitAll()
                             .requestMatchers(HttpMethod.GET,
                                     "/api/auth/check-email",
@@ -93,6 +105,15 @@ public class SecurityConfig {
                 })
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .baseUri("/api/auth/oauth2/authorization"))
+                        .redirectionEndpoint(endpoint -> endpoint
+                                .baseUri("/api/auth/oauth2/code/*"))
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(kakaoOAuth2UserService))
+                        .successHandler(oauth2LoginSuccessHandler)
+                        .failureHandler(oauth2LoginFailureHandler))
                 .cors(Customizer.withDefaults());
 
         return http.build();
