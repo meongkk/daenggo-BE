@@ -1,5 +1,6 @@
 package com.daenggo.backend.user.repository;
 
+import com.daenggo.backend.user.entity.AuthProvider;
 import com.daenggo.backend.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -23,9 +24,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findTop10ByNicknameContainingIgnoreCaseAndDeletedAtIsNullOrderByNicknameAsc(
             String nickname
     );
-    
+
     Optional<User> findByProviderAndProviderIdAndDeletedAtIsNull(
-        AuthProvider provider,
-        String providerId
+            AuthProvider provider,
+            String providerId
     );
 }

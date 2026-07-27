@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,7 +20,13 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_users_provider_provider_id",
+                columnNames = {"provider", "provider_id"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
@@ -41,7 +48,7 @@ public class User {
     private String image;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(nullable = false, length = 20)
     private AuthProvider provider;
 
     @Column(name = "provider_id", length = 200)
