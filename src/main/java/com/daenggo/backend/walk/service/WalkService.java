@@ -122,7 +122,9 @@ public class WalkService {
 		// 평균 페이스 계산 (단위 : sec)
 		int avgPaceSec = 0;
 		if (request.getDistanceM() != null 
+
 				&& request.getDistanceM().doubleValue() > 1000) {
+
 			
 	        avgPaceSec =
 	        		(int) (durationSec / (request.getDistanceM().doubleValue() / 1000.0));
