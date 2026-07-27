@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,25 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
     );
 
     long countByGroupIdAndStatus(Long groupId, GroupMemberStatus status);
+
+    @Query("""
+            select count(walkerMember)
+            from GroupMember walkerMember
+            where walkerMember.user.id = :walkerUserId
+              and walkerMember.status = :status
+              and exists (
+                  select ownerMember.id
+                  from GroupMember ownerMember
+                  where ownerMember.group.id = walkerMember.group.id
+                    and ownerMember.user.id = :petOwnerUserId
+                    and ownerMember.status = :status
+              )
+            """)
+    long countCommonActiveGroups(
+            @Param("walkerUserId") Long walkerUserId,
+            @Param("petOwnerUserId") Long petOwnerUserId,
+            @Param("status") GroupMemberStatus status
+    );
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("delete from GroupMember member where member.group.id = ?1")

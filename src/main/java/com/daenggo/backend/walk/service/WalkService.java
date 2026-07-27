@@ -10,10 +10,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.daenggo.backend.group.entity.GroupMemberStatus;
+import com.daenggo.backend.group.repository.GroupMemberRepository;
 import com.daenggo.backend.pet.entity.Pet;
 import com.daenggo.backend.pet.repository.PetRepository;
 import com.daenggo.backend.user.entity.User;
@@ -50,6 +54,7 @@ public class WalkService {
 	private final WalkRouteRecordRepository walkRouteRecordRepository;
 	private final UserRepository userRepository;
 	private final PetRepository petRepository;
+	private final GroupMemberRepository groupMemberRepository;
 	private final WalkRecordPetRepository walkRecordPetRepository;
 	private final WalkPhotoRepository walkPhotoRepository;
 	
@@ -117,7 +122,9 @@ public class WalkService {
 		// 평균 페이스 계산 (단위 : sec)
 		int avgPaceSec = 0;
 		if (request.getDistanceM() != null 
-				&& request.getDistanceM().doubleValue() > 1000s) {
+
+				&& request.getDistanceM().doubleValue() > 1000) {
+
 			
 	        avgPaceSec =
 	        		(int) (durationSec / (request.getDistanceM().doubleValue() / 1000.0));
@@ -137,8 +144,7 @@ public class WalkService {
 		// 참여 반려동물 저장
 		for (Long petId : request.getPetIds()) {
 
-	        Pet pet = petRepository.findByIdAndUserIdAndDeletedAtIsNull(petId, walk.getUser().getId())
-	                .orElseThrow(() -> new IllegalArgumentException("반려동물이 없습니다."));
+	        Pet pet = findWalkablePet(petId, walk.getUser());
 
 	        WalkRecordPet walkRecordPet = WalkRecordPet.builder()
 	                .walkRecord(walk)
@@ -448,6 +454,34 @@ public class WalkService {
 
 		return walkRecordRepository.findByWalkRecordIdAndUserAndIsDeletedFalse(walkId, user)
 				.orElseThrow(() -> new IllegalArgumentException("산책 기록을 찾을 수 없습니다."));
+	}
+
+	private Pet findWalkablePet(final Long petId, final User walker) {
+		final Pet pet = petRepository.findByIdAndDeletedAtIsNull(petId)
+				.orElseThrow(() -> new ResponseStatusException(
+						HttpStatus.NOT_FOUND,
+						"반려동물을 찾을 수 없습니다."
+				));
+
+		if (pet.getUser().getId().equals(walker.getId())) {
+			return pet;
+		}
+
+		final boolean sameActiveGroup =
+				groupMemberRepository.countCommonActiveGroups(
+						walker.getId(),
+						pet.getUser().getId(),
+						GroupMemberStatus.ACTIVE
+				) > 0;
+
+		if (!sameActiveGroup) {
+			throw new ResponseStatusException(
+					HttpStatus.FORBIDDEN,
+					"본인 또는 같은 그룹원의 반려동물만 선택할 수 있습니다."
+			);
+		}
+
+		return pet;
 	}
 	
 	

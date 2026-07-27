@@ -1,4 +1,4 @@
-package com.daenggo.backend.group.service;
+ package com.daenggo.backend.group.service;
 
 import com.daenggo.backend.group.dto.GroupRequestDto;
 import com.daenggo.backend.group.dto.GroupResponseDto;
@@ -602,8 +602,8 @@ public class GroupService {
                         .findAllByWalkRecordInAndPetDeletedAtIsNull(walkRecords)
                         .stream()
                         .filter(walkRecordPet ->
-                                walkRecordPet.getPet().getUser().getId().equals(
-                                        walkRecordPet.getWalkRecord().getUser().getId()
+                                activeMemberUserIds.contains(
+                                        walkRecordPet.getPet().getUser().getId()
                                 ))
                         .collect(Collectors.groupingBy(
                                 walkRecordPet ->
@@ -611,11 +611,12 @@ public class GroupService {
                         ));
 
         return walkRecords.stream()
-                .filter(walkRecord ->
-                        petsByWalkRecordId.containsKey(walkRecord.getWalkRecordId()))
                 .map(walkRecord -> GroupResponseDto.GroupWalk.from(
                         walkRecord,
-                        petsByWalkRecordId.get(walkRecord.getWalkRecordId())
+                        petsByWalkRecordId.getOrDefault(
+                                walkRecord.getWalkRecordId(),
+                                List.of()
+                        )
                 ))
                 .toList();
     }
