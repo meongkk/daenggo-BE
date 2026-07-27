@@ -113,10 +113,4 @@ public class User {
         this.password = password;
     }
 
-    /**
-     * 회원 탈퇴 시각 기록
-     */
-    public void withdraw() {
-        this.deletedAt = LocalDateTime.now();
-    }
 }

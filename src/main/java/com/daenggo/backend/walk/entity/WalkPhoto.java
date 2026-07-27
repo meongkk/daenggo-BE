@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import com.daenggo.backend.place.entity.Place;
 
@@ -36,6 +38,7 @@ public class WalkPhoto {
 
 	
 	@ManyToOne(fetch = FetchType.LAZY)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@JoinColumn(name="walk_record_id", nullable = false)
 	private WalkRecord walkRecord;
 	

@@ -43,3 +43,4 @@ src/main/resources/application-local.properties
 # Local image uploads
 /uploads/
 /docs/sql/*
+!/docs/sql/20260727_user_hard_delete_cascade.sql

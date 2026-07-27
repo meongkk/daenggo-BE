@@ -15,6 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "walk_record_pets")
@@ -30,10 +32,12 @@ public class WalkRecordPet {
 	private Long walkRecordPetId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@JoinColumn(name="pet_id", nullable = false)
 	private Pet pet;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@JoinColumn(name="walk_record_id", nullable = false)
 	private WalkRecord walkRecord;
 }

@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.AccessLevel;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.time.LocalDateTime;
 import com.daenggo.backend.user.entity.User;
 import com.daenggo.backend.place.entity.Place;
@@ -38,6 +40,7 @@ public class Favorite {
     private Long favoriteId;
     
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
