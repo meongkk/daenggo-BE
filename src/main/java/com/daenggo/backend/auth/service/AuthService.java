@@ -147,7 +147,8 @@ public class AuthService {
         refreshTokenService.revokeOwnedToken(user, request.getRefreshToken());
     }
 
-    private AuthResponseDto.Token issueTokenPair(final User user) {
+    @Transactional
+    public AuthResponseDto.Token issueTokenPair(final User user) {
         final AccessTokenService.IssuedAccessToken accessToken = accessTokenService.issue(user);
         final RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokenService.issue(user);
 

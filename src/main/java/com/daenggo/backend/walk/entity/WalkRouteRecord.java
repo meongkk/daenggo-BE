@@ -15,6 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name="walk_route_records")
@@ -30,6 +32,7 @@ public class WalkRouteRecord {
 	private Long walkRouteRecordId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@JoinColumn(name="walk_record_id", nullable = false)
 	private WalkRecord walkRecord;
 	

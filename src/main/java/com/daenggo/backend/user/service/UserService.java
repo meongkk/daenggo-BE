@@ -1,5 +1,6 @@
 package com.daenggo.backend.user.service;
 
+import com.daenggo.backend.auth.oauth.KakaoUnlinkService;
 import com.daenggo.backend.auth.service.RefreshTokenService;
 import com.daenggo.backend.user.dto.UserRequestDto;
 import com.daenggo.backend.user.dto.UserResponseDto;
@@ -26,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final KakaoUnlinkService kakaoUnlinkService;
 
     /**
      * 로그인 회원 정보 조회
@@ -109,15 +111,16 @@ public class UserService {
     }
 
     /**
-     * 로그인 회원 탈퇴 상태 기록
+     * 카카오 연결을 끊은 뒤 로그인 회원을 완전 삭제
      *
      * @param email 로그인 회원 이메일
      */
     @Transactional
     public void withdraw(final String email) {
         final User user = findActiveUser(email);
-        user.withdraw();
-        refreshTokenService.revokeAll(user.getId());
+        kakaoUnlinkService.unlinkIfKakao(user.getProvider(), user.getProviderId());
+        userRepository.delete(user);
+        userRepository.flush();
     }
 
     /**

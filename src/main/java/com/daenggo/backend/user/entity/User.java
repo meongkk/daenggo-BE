@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,7 +20,13 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_users_provider_provider_id",
+                columnNames = {"provider", "provider_id"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
@@ -31,7 +38,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -41,7 +48,7 @@ public class User {
     private String image;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(nullable = false, length = 20)
     private AuthProvider provider;
 
     @Column(name = "provider_id", length = 200)
@@ -106,10 +113,4 @@ public class User {
         this.password = password;
     }
 
-    /**
-     * 회원 탈퇴 시각 기록
-     */
-    public void withdraw() {
-        this.deletedAt = LocalDateTime.now();
-    }
 }
